@@ -9,7 +9,7 @@
 |    | $$  | $$| $$      |  $$$$$$/| $$  | $$|  $$$$$$$| $$| $$| $$$$$$$/|  $$$$$$$| $$          |
 |    |__/  |__/|__/       \______/ |__/  |__/ \_______/|__/|__/| $$____/  \_______/|__/          |
 |                                                             | $$                               |
-|        A Discord bot to help RPGs by Steely (SteelStone)    | $$    1.0.0-BETA                 |
+|        A Discord bot to help RPGs by Steely (SteelStone)    | $$    1.1.0-BETA                 |
 |                                                             |__/                               |
 |                                                                                                |
 | * Art made in: https://www.asciiart.eu/text-to-ascii-art (Using "Big Money-ne")                |
@@ -28,6 +28,7 @@ struct Handler;
 impl EventHandler for Handler {
     async fn message(&self, ctx: Context, msg: Message) {
         // Variáveis.
+        let mut debug = false;
         let mut index = 0;
         let mut output: Vec<String> = Vec::new();
         let mut input: Vec<String> = msg.content
@@ -40,6 +41,10 @@ impl EventHandler for Handler {
         || msg.content.chars().next() == Some('"')
         {return;}
         
+        if msg.content.chars().next() == Some('?'){
+            input.remove(0);
+            debug = true;
+        }
         /*-------------------------+
         | PROCURA COMANDOS RÁPIDOS |
         +--------------------------*/
@@ -58,11 +63,11 @@ impl EventHandler for Handler {
                 }
             "rphelp" => if let Err(why) = msg.reply_ping(&ctx.http, HELP)
                 .await {println!("Error sending message: {why:?}");},
-            "r1" => if let Err(why) = msg.reply_ping(&ctx.http, R1)
+            "rphelp1" => if let Err(why) = msg.reply_ping(&ctx.http, R1)
                 .await {println!("Error sending message: {why:?}");},
-            "r2" => if let Err(why) = msg.reply_ping(&ctx.http, R2)
+            "rphelp2" => if let Err(why) = msg.reply_ping(&ctx.http, R2)
                 .await {println!("Error sending message: {why:?}");},
-            "r3" => if let Err(why) = msg.reply_ping(&ctx.http, R3)
+            "rphelp3" => if let Err(why) = msg.reply_ping(&ctx.http, R3)
                 .await {println!("Error sending message: {why:?}");},
             _ => ()
         }
@@ -168,6 +173,14 @@ impl EventHandler for Handler {
             }
             index += 1;
         }
+        // Altera o sinal de multiplicação de "*" para "\\*".
+        index = 0;
+        while index < neo_input.len() {
+            if neo_input[index] == "*"{
+                neo_input[index] = String::from("\\*") ;
+            }
+            index += 1;
+        }
         // Arruma números negativos.
         let mut bugfix = false;
         index = 0;
@@ -220,7 +233,8 @@ impl EventHandler for Handler {
             while index < neo_input.len() {
                 match neo_input[index].as_str(){
                     "g"|"l"|"a"|"d" => {
-                        if !neo_input[index - 1].chars().any(char::is_numeric){
+                        if !neo_input[index - 1].chars().any(char::is_numeric)
+                        && !neo_input[index - 1].contains(")"){
                             neo_input.insert(index, String::from("1"))
                         }
                     }
@@ -238,7 +252,7 @@ impl EventHandler for Handler {
             while to_solve.contains(&String::from("(")) {
                 to_solve.remove(0);
             }
-            output.push(String::from(format!("### {time}. (*{}*)\n", to_solve.join(""))));
+            output.push(String::from(format!("### {time})  {}\n", to_solve.join(""))));
             loop {
                 // Resolve os dados se possível.
                 index = 0;
@@ -360,7 +374,7 @@ impl EventHandler for Handler {
                 index = 0;
                 while index < to_solve.len(){
                     match to_solve[index].as_str() {
-                        "*" => {
+                        "\\*" => {
                             if to_solve[index + 1].chars().any(char::is_numeric)
                             && to_solve[index - 1].chars().any(char::is_numeric){
                                 let n1: f64 = to_solve[index - 1].parse().expect("msg");
@@ -403,7 +417,11 @@ impl EventHandler for Handler {
                             let n1: f64 = to_solve[index - 1].parse().expect("msg");
                             let n2: f64 = to_solve[index + 1].parse().expect("msg");
                             let result = n1+n2;
-                            output.push(String::from(format!("**{n1}** + **{n2}** = **{result}**;\n")));
+                            if n2 < 0.0 {
+                                output.push(String::from(format!("**{n1} - {}** = **{result}**;\n", n2 * -1.0)));
+                            } else {
+                                output.push(String::from(format!("**{n1} + {n2}** = **{result}**;\n")));
+                            }
                             
                             to_solve.remove(index + 1);
                             to_solve[index] = String::from(result.to_string());
@@ -447,24 +465,30 @@ impl EventHandler for Handler {
         /*--------------------+
         | ENTREGA O RESULTADO |
         +---------------------*/
-        output.push("------------------\n".to_string());
-        output.push(String::from(format!("**{}**", neo_input.join(""))));
-        if !txt.is_empty(){
-            output.push(" ".to_string());
-            output.push(String::from(txt.join("").trim()));
+        if debug {
+            output.push("------------------\n".to_string());
+            output.push(String::from(format!("**{}**", neo_input.join(""))));
+            if !txt.is_empty(){
+                output.push(" ".to_string());
+                output.push(String::from(txt.join("").trim()));
+            }
+            println!("\n
+                \nResposta fornecida ao usuário:\
+                \n------------------------------\
+                \n{}\
+                \n------------------------------\
+                ",output.join(""));
+            if let Err(why) = msg.reply_ping(&ctx.http, format!("{}",output.join("")))
+                .await {println!("Error sending message: {why:?}");}
+        } else {
+            neo_input.push("**".to_string());
+            if !txt.is_empty(){
+                neo_input.push(" ".to_string());
+                neo_input.push(String::from(txt.join("").trim()));
+            }
+            if let Err(why) = msg.reply_ping(&ctx.http, format!("**{}",neo_input.join("")))
+                .await {println!("Error sending message: {why:?}");}
         }
-        
-        // Envia o resultado.
-        println!("\n
-            \nResposta fornecida ao usuário:\
-            \n------------------------------\
-            \n{}\
-            \n------------------------------\
-            ",output.join(""));
-        if let Err(why) = msg.reply_ping(&ctx.http, format!("{}",output.join("")))
-            .await {println!("Error sending message: {why:?}");}
-        
-        
     }
 }
 
@@ -498,11 +522,10 @@ const HELP: &str = "
 -# \"RP\" de \"Role Playing ~~Game~~ \"
 -# \"Hellp\" de \"Helper (Ajudante) ~~E pq foi um *\"hell\"* fazer isso~~ (zoera :D) \"
 
-
 **Para respostas sobre as seguintes perguntas, digite o código respectivo (Sem áspas)**
-**\"r1\"** Por que meu comando não está funcionando?
-**\"r2\"** Como jogo um dado? Como funciona?
-**\"r3\"** Como funcionam os comentários?
+**\"rphr1\"** Por que meu comando não está funcionando?
+**\"rphr2\"** Como jogo um dado? Como funciona?
+**\"rphr3\"** Como funcionam os comentários?
 ";
 const R1: &str = "
 ## \"Por que meu comando não está funcionando?\"
