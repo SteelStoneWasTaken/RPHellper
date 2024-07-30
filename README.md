@@ -15,10 +15,10 @@
 ```
 # Funções:
 > [!TIP]
-> O bot desconsidera a diferença entre minúsculas e maiúsculas, ambas terão o mesmo resultado.
+> O bot desconsidera a diferença entre minúsculas e maiúsculas, ambas terão o mesmo resultado. <br>
 > O bot também desconsidera espaços.
 
-## Funções de dados (G L A D)
+## Funções de dados:
 > [!IMPORTANT]
 > Nenhuma função de dados aceita números negativos ou fracionários.
 
@@ -41,7 +41,7 @@ A quantidade de repetições é definida pelo número anterior, caso não haja n
 Escolhe um número aleatório entre 1 e o número posterior x vezes e escolhe o maior resultado. <br>
 A quantidade de repetições é definida pelo número anterior, caso não haja nenhum, ele só repetirá uma vez.
 
-## Funções Matemáticas (+ - * /)
+## Funções Matemáticas:
 
 ### `+`
 Soma o número anterior pelo proximo.
@@ -56,7 +56,7 @@ Multiplica o número anterior pelo proximo.
 ### `/`
 Divide o número anterior pelo proximo.
 
-## Outras Funções (+ - * /)
+## Outras Funções:
 
 ### `moeda` ou `coin`
 Responde com "Cara" ou "Coroa".
